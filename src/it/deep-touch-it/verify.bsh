@@ -1,0 +1,42 @@
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.Set;
+
+Path file = basedir.toPath().resolve("target/deep/touch");
+LinkOption[] options = new LinkOption[0];
+if (!Files.exists(file, options)) {
+  throw new AssertionError("'target/deep/touch' not found");
+}
+
+if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+  Set expected =
+      EnumSet.of(
+          PosixFilePermission.OWNER_READ,
+          PosixFilePermission.OWNER_WRITE,
+          PosixFilePermission.GROUP_READ,
+          PosixFilePermission.OTHERS_READ);
+
+  Set actual = Files.getPosixFilePermissions(file, options);
+  if (!actual.equals(expected)) {
+    throw new IllegalStateException(expected + " != " + actual);
+  }
+
+  expected =
+      EnumSet.of(
+          PosixFilePermission.OWNER_READ,
+          PosixFilePermission.OWNER_WRITE,
+          PosixFilePermission.OWNER_EXECUTE,
+          PosixFilePermission.GROUP_READ,
+          PosixFilePermission.GROUP_EXECUTE,
+          PosixFilePermission.OTHERS_READ,
+          PosixFilePermission.OTHERS_EXECUTE);
+
+  actual = Files.getPosixFilePermissions(file.getParent(), options);
+  if (!actual.equals(expected)) {
+    throw new IllegalStateException(expected + " != " + actual);
+  }
+}
