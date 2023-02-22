@@ -18,11 +18,21 @@
       <plugin>
         <groupId>org.honton.chas</groupId>
         <artifactId>touch-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>touch</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
         <configuration>
           <modificationTime>0</modificationTime>
           <files>
-            <directory>../../..</directory>
-            <includes>**/existing-touch-it/pom.xml</includes>
+            <directory>path/to/create</directory>
+            <includes>
+              <include>touched</include>
+            </includes>
           </files>
         </configuration>
       </plugin>

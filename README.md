@@ -17,7 +17,7 @@ a zero byte file.
 |------------------|---------------|---------|-------------------------------------------------------------------------------------------------------------------|
 | skipTouch        | ${touch.skip} | false   | Skip modifying file timestamps                                                                                    |
 | files            |               |         | The fileset to update last modification time                                                                      |
-| modificationTime |               |         | The timestamp. Either a positive integer of number of seconds since the Unix Epoch, or an ISO8601 zoned date time |
+| modificationTime |               | now     | The timestamp. Either a positive integer of number of seconds since the Unix Epoch, or an ISO8601 zoned date time |
 
 ## Filset Defaults
 The following attributes of FileSet are used.  Any attribute not in this table is ignored.
@@ -41,7 +41,7 @@ The following attributes of FileSet are used.  Any attribute not in this table i
           <plugin>
             <groupId>org.honton.chas</groupId>
             <artifactId>touch-maven-plugin</artifactId>
-            <version>0.0.1</version>
+            <version>0.0.2</version>
           </plugin>
         </plugins>
     </pluginManagement>
@@ -60,17 +60,15 @@ The following attributes of FileSet are used.  Any attribute not in this table i
         </executions>
         <configuration>
           <modificationTime>0</modificationTime>
-          <filesets>
-            <fileset>
-              <directory>some/relative/path</directory>
-              <includes>
-                <include>**/*</include>
-              </includes>
-              <excludes>
-                <exclude>**/log.log</exclude>
-              </excludes>
-            </fileset>
-          </filesets>
+          <files>
+            <directory>some/relative/path</directory>
+            <includes>
+              <include>**/*</include>
+            </includes>
+            <excludes>
+              <exclude>**/log.log</exclude>
+            </excludes>
+          </files>
         </configuration>
       </plugin>
     </plugins>
@@ -82,13 +80,11 @@ Create a file and its parent directories:
 ```xml
     <configuration>
       <modificationTime>${maven.build.timestamp}</modificationTime>
-      <filesets>
-        <fileset>
-          <directory>path/to/create</directory>
-          <includes>
-            <include>.gitignore</include>
-          </includes>
-        </fileset>
-      </filesets>
+      <files>
+        <directory>path/to/create</directory>
+        <includes>
+          <include>.gitignore</include>
+        </includes>
+      </files>
     </configuration>
 ```

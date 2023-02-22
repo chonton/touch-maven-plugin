@@ -1,8 +1,10 @@
 package org.honton.chas.touch.maven.plugin;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
@@ -15,26 +17,37 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.shared.model.fileset.FileSet;
 
-/** Change modification time of specified files. */
+/**
+ * Change modification time of specified files.
+ */
 @Mojo(name = "touch", threadSafe = true)
 public class TouchMojo extends AbstractMojo {
 
-  /** Skip touching */
+  private static final Pattern IS_POSITIVE_INTEGER = Pattern.compile("\\d+");
+  /**
+   * Skip touching
+   */
   @Parameter(property = "touch.skip", defaultValue = "false")
   private boolean skipTouch;
-
   /**
    * Modification timestamp to use. If numeric, the number of seconds in the Unix Epoch. If
    * non-numeric, an ISO8601 timestamp.
    */
   @Parameter(property = "touch.time", required = true)
   private String modificationTime;
-
-  /** A <code>fileSet</code> selecting files and directories to touch. */
+  /**
+   * A <code>fileSet</code> selecting files and directories to touch.
+   */
   @Parameter(required = true)
   private FileSet files;
 
-  private static final Pattern IS_POSITIVE_INTEGER = Pattern.compile("\\d+");
+  private static FileAttribute<?>[] getPosixAttrs(FileSystem fileSystem, String mode) {
+    if (fileSystem.supportedFileAttributeViews().contains("posix")) {
+      return new FileAttribute[] {PosixAttributes.getFilePermission(mode)};
+    } else {
+      return new FileAttribute[0];
+    }
+  }
 
   public void execute() throws MojoExecutionException, MojoFailureException {
     if (skipTouch) {
@@ -43,30 +56,40 @@ public class TouchMojo extends AbstractMojo {
     }
     FileTime fileTime = getEpochTime();
     try {
-      FileAttribute<?>[] dirAttrs = getPosixAttrs(files.getDirectoryMode());
-      FileAttribute<?>[] fileAttrs = getPosixAttrs(files.getFileMode());
+      Path root = getRootPath(files);
 
-      new Scanner(files)
-          .walkTree(
-              path -> {
-                if (Files.exists(path)) {
-                  Files.setLastModifiedTime(path, fileTime);
-                } else {
-                  Files.createDirectories(path.getParent(), dirAttrs);
-                  Files.createFile(path, fileAttrs);
-                }
-              });
+      FileSystem fileSystem = root.getFileSystem();
+      FileAttribute<?>[] dirAttrs = getPosixAttrs(fileSystem, files.getDirectoryMode());
+      FileAttribute<?>[] fileAttrs = getPosixAttrs(fileSystem, files.getFileMode());
+
+      if (files.getDirectory() != null) {
+        Files.createDirectories(root, dirAttrs);
+      }
+
+      new Scanner(files, root).walkTree(path -> {
+        if (Files.exists(path)) {
+          Files.setLastModifiedTime(path, fileTime);
+        } else {
+          Path parent = path.getParent();
+          if (parent == null) {
+            getLog().info("No parent for " + path);
+          } else {
+            Files.createDirectories(path.getParent(), dirAttrs);
+          }
+          Files.createFile(path, fileAttrs);
+          Files.setLastModifiedTime(path, fileTime);
+        }
+      });
     } catch (IOException e) {
       throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
-  private FileAttribute<?>[] getPosixAttrs(String mode) {
-    if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
-      return new FileAttribute[] {PosixAttributes.getFilePermission(mode)};
-    } else {
-      return new FileAttribute[0];
-    }
+  private static Path getRootPath(FileSet files) {
+    String dir = files.getDirectory();
+    return dir == null
+        ? Paths.get(System.getProperty("user.dir"))
+        : Paths.get(dir).toAbsolutePath().normalize();
   }
 
   FileTime getEpochTime() {

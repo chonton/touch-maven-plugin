@@ -28,7 +28,7 @@ class ScannerTest {
     files.setExcludes(excludes);
 
     Set<Path> actual = new HashSet<>();
-    new Scanner(files).walkTree((actual::add));
+    new Scanner(files, Path.of(System.getProperty("user.dir"))).walkTree(actual::add);
     return actual;
   }
 
@@ -41,11 +41,8 @@ class ScannerTest {
   void walkJava() throws IOException {
     Set<Path> actual = walkFileSet(List.of("**/*.java"), List.of("**/HelpMojo.java"));
     Set<Path> expected =
-        Set.of(
-            getPath(SRC_MAIN, "PosixAttributes.java"),
-            getPath(SRC_MAIN, "Scanner.java"),
-            getPath(SRC_MAIN, "TouchMojo.java"),
-            getPath(SRC_TEST, "PosixAttributesTest.java"),
+        Set.of(getPath(SRC_MAIN, "PosixAttributes.java"), getPath(SRC_MAIN, "Scanner.java"),
+            getPath(SRC_MAIN, "TouchMojo.java"), getPath(SRC_TEST, "PosixAttributesTest.java"),
             getPath(SRC_TEST, "ScannerTest.java"));
     Assertions.assertEquals(expected, actual);
   }
@@ -58,7 +55,7 @@ class ScannerTest {
   void concreteMatch() throws IOException {
     String scannerTest = "src/test/java/org/honton/chas/touch/maven/plugin/ScannerTest.java";
     Set<Path> actual = walkFileSet(List.of(scannerTest), List.of());
-    Set<Path> expected = Set.of(Path.of(scannerTest));
+    Set<Path> expected = Set.of(Path.of(System.getProperty("user.dir"), scannerTest));
     Assertions.assertEquals(expected, actual);
   }
 
@@ -66,7 +63,7 @@ class ScannerTest {
   void concreteMiss() throws IOException {
     String missing = "src/NotThere";
     Set<Path> actual = walkFileSet(List.of(missing), List.of());
-    Set<Path> expected = Set.of(Path.of(missing));
+    Set<Path> expected = Set.of(Path.of(System.getProperty("user.dir"), missing));
     Assertions.assertEquals(expected, actual);
   }
 
