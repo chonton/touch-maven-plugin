@@ -5,9 +5,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZonedDateTime;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.maven.plugin.AbstractMojo;
@@ -17,35 +19,57 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.shared.model.fileset.FileSet;
 
-/**
- * Change modification time of specified files.
- */
+/** Change modification time of specified files. */
 @Mojo(name = "touch", threadSafe = true)
 public class TouchMojo extends AbstractMojo {
 
   private static final Pattern IS_POSITIVE_INTEGER = Pattern.compile("\\d+");
-  /**
-   * Skip touching
-   */
+  /** Skip touching */
   @Parameter(property = "touch.skip", defaultValue = "false")
   private boolean skipTouch;
+
   /**
    * Modification timestamp to use. If numeric, the number of seconds in the Unix Epoch. If
    * non-numeric, an ISO8601 timestamp.
    */
-  @Parameter(property = "touch.time", required = true)
+  @Parameter(property = "touch.time")
   private String modificationTime;
-  /**
-   * A <code>fileSet</code> selecting files and directories to touch.
-   */
+
+  /** A <code>fileSet</code> selecting files and directories to touch. */
   @Parameter(required = true)
   private FileSet files;
 
-  private static FileAttribute<?>[] getPosixAttrs(FileSystem fileSystem, String mode) {
+  private static Set<PosixFilePermission> getPosixAttrs(FileSystem fileSystem, String mode) {
     if (fileSystem.supportedFileAttributeViews().contains("posix")) {
-      return new FileAttribute[] {PosixAttributes.getFilePermission(mode)};
+      return PosixAttributes.getFilePermission(mode);
     } else {
-      return new FileAttribute[0];
+      return Set.of();
+    }
+  }
+
+  private static Path getRootPath(FileSet files) {
+    String dir = files.getDirectory();
+    return dir == null
+        ? Paths.get(System.getProperty("user.dir"))
+        : Paths.get(dir).toAbsolutePath().normalize();
+  }
+
+  private void createDirs(Path path, Set<PosixFilePermission> dirAttrs) throws IOException {
+    if (Files.notExists(path)) {
+      createDirs(path.getParent(), dirAttrs);
+
+      if (getLog().isDebugEnabled()) {
+        getLog()
+            .debug(
+                "Creating "
+                    + path
+                    + " with permissions "
+                    + PosixFilePermissions.toString(dirAttrs));
+      }
+      Files.createDirectory(path);
+      if (!dirAttrs.isEmpty()) {
+        Files.setPosixFilePermissions(path, dirAttrs);
+      }
     }
   }
 
@@ -59,40 +83,61 @@ public class TouchMojo extends AbstractMojo {
       Path root = getRootPath(files);
 
       FileSystem fileSystem = root.getFileSystem();
-      FileAttribute<?>[] dirAttrs = getPosixAttrs(fileSystem, files.getDirectoryMode());
-      FileAttribute<?>[] fileAttrs = getPosixAttrs(fileSystem, files.getFileMode());
+      Set<PosixFilePermission> dirAttrs = getPosixAttrs(fileSystem, files.getDirectoryMode());
+      Set<PosixFilePermission> fileAttrs = getPosixAttrs(fileSystem, files.getFileMode());
 
       if (files.getDirectory() != null) {
-        Files.createDirectories(root, dirAttrs);
+        createDirs(root, dirAttrs);
       }
 
-      new Scanner(files, root).walkTree(path -> {
-        if (Files.exists(path)) {
-          Files.setLastModifiedTime(path, fileTime);
-        } else {
-          Path parent = path.getParent();
-          if (parent == null) {
-            getLog().info("No parent for " + path);
-          } else {
-            Files.createDirectories(path.getParent(), dirAttrs);
-          }
-          Files.createFile(path, fileAttrs);
-          Files.setLastModifiedTime(path, fileTime);
-        }
-      });
+      new Scanner(files, root).walkTree(path -> touch(path, fileTime, dirAttrs, fileAttrs));
     } catch (IOException e) {
       throw new MojoExecutionException(e.getMessage(), e);
     }
   }
 
-  private static Path getRootPath(FileSet files) {
-    String dir = files.getDirectory();
-    return dir == null
-        ? Paths.get(System.getProperty("user.dir"))
-        : Paths.get(dir).toAbsolutePath().normalize();
+  private void touch(
+      Path path,
+      FileTime fileTime,
+      Set<PosixFilePermission> dirAttrs,
+      Set<PosixFilePermission> fileAttrs) {
+    try {
+      if (Files.exists(path)) {
+        if (getLog().isDebugEnabled()) {
+          getLog().debug("Setting modified time of " + path + " to " + fileTime);
+        }
+      } else {
+        Path parent = path.getParent();
+        if (parent == null) {
+          getLog().info("No parent for " + path);
+        } else {
+          createDirs(path.getParent(), dirAttrs);
+        }
+        if (getLog().isDebugEnabled()) {
+          getLog()
+              .debug(
+                  "Creating "
+                      + path
+                      + " with permissions "
+                      + PosixFilePermissions.toString(fileAttrs)
+                      + " and time "
+                      + fileTime);
+        }
+        Files.createFile(path);
+        if (!fileAttrs.isEmpty()) {
+          Files.setPosixFilePermissions(path, fileAttrs);
+        }
+      }
+      Files.setLastModifiedTime(path, fileTime);
+    } catch (IOException e) {
+      getLog().warn(e.getMessage());
+    }
   }
 
   FileTime getEpochTime() {
+    if (modificationTime == null) {
+      return FileTime.from(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    }
     if (IS_POSITIVE_INTEGER.matcher(modificationTime).matches()) {
       return FileTime.from(Long.parseLong(modificationTime), TimeUnit.SECONDS);
     }

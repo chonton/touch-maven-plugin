@@ -41,7 +41,7 @@ The following attributes of FileSet are used.  Any attribute not in this table i
           <plugin>
             <groupId>org.honton.chas</groupId>
             <artifactId>touch-maven-plugin</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.3</version>
           </plugin>
         </plugins>
     </pluginManagement>

@@ -1,8 +1,6 @@
 package org.honton.chas.touch.maven.plugin;
 
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
@@ -10,12 +8,12 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class PosixAttributes {
 
-  public static FileAttribute<Set<PosixFilePermission>> getFilePermission(String mode) {
-    return PosixFilePermissions.asFileAttribute(toPosixSet(mode));
+  public static Set<PosixFilePermission> getFilePermission(String mode) {
+    return toPosixSet(mode);
   }
 
   public static Set<PosixFilePermission> toPosixSet(String mode) {
-    return toPosixSet(Integer.parseInt(mode, mode.charAt(0)=='0' ?8 :10));
+    return toPosixSet(Integer.parseInt(mode, 8));
   }
 
   public static Set<PosixFilePermission> toPosixSet(int mode) {

@@ -6,17 +6,20 @@
 
   <groupId>org.honton.chas</groupId>
   <artifactId>touch-it-parent</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.0</version>
   <packaging>pom</packaging>
 
   <modules>
     <module>deep-touch-it</module>
+    <module>example</module>
+    <module>existing-touch-it</module>
   </modules>
 
   <properties>
+    <junit.jupiter.version>5.9.3</junit.jupiter.version>
 
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
     <!-- don't deploy -->
     <maven.deploy.skip>true</maven.deploy.skip>
     <!-- don't install -->
@@ -27,13 +30,38 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <dependencies>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
           <groupId>org.honton.chas</groupId>
           <artifactId>touch-maven-plugin</artifactId>
-          <version>0.0.2</version>
+          <version>0.0.3</version>
           <executions>
             <execution>
               <goals>
@@ -45,6 +73,14 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.0</version>
+      </plugin>
+    </plugins>
   </build>
 
 </project>

@@ -28,19 +28,23 @@ public class Scanner {
     FileSystem fileSystem = root.getFileSystem();
 
     excludePatterns =
-        files.getExcludes().stream().map(exclude -> fileSystem.getPathMatcher("glob:" + exclude))
+        files.getExcludes().stream()
+            .map(exclude -> fileSystem.getPathMatcher("glob:" + exclude))
             .collect(Collectors.toSet());
 
-    files.getIncludes().forEach(include -> {
-      if (isConcrete(include)) {
-        Path includePath = Path.of(include);
-        if (!anyMatch(excludePatterns, includePath)) {
-          concretePaths.add(includePath);
-        }
-      } else {
-        includePatterns.add(fileSystem.getPathMatcher("glob:" + include));
-      }
-    });
+    files
+        .getIncludes()
+        .forEach(
+            include -> {
+              if (isConcrete(include)) {
+                Path includePath = Path.of(include);
+                if (!anyMatch(excludePatterns, includePath)) {
+                  concretePaths.add(includePath);
+                }
+              } else {
+                includePatterns.add(fileSystem.getPathMatcher("glob:" + include));
+              }
+            });
 
     if (files.getIncludes().isEmpty()) {
       includePatterns.add(fileSystem.getPathMatcher("glob:**"));
@@ -48,20 +52,25 @@ public class Scanner {
   }
 
   static boolean isConcrete(String path) {
-    return path.indexOf('*') < 0 && path.indexOf('?') < 0 && path.indexOf('[') < 0
+    return path.indexOf('*') < 0
+        && path.indexOf('?') < 0
+        && path.indexOf('[') < 0
         && path.indexOf('{') < 0;
   }
 
   public void walkTree(PathConsumer consumer) throws IOException {
     Set<Path> toVisit = new HashSet<>(concretePaths);
-    Files.walkFileTree(root,
+    Files.walkFileTree(
+        root,
         files.isFollowSymlinks() ? Set.of(FileVisitOption.FOLLOW_LINKS) : Set.of(),
-        Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+        Integer.MAX_VALUE,
+        new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs)
               throws IOException {
-            toVisit.remove(path);
-            if (anyMatch(includePatterns, path) && !anyMatch(excludePatterns, path)) {
+            Path relative = root.relativize(path);
+            if ((toVisit.remove(relative) || anyMatch(includePatterns, relative))
+                && !anyMatch(excludePatterns, relative)) {
               consumer.accept(path);
             }
             return FileVisitResult.CONTINUE;
