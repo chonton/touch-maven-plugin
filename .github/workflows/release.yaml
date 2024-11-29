@@ -14,9 +14,9 @@ jobs:
     steps:
     - name: Echo Event
       run: |
-        echo base_ref: ${{ github.base_ref }}
-        echo head_ref: ${{ github.head_ref }}
-        echo event: ${{ toJSON(github.event) }}
+        echo "base_ref:" '${{ github.base_ref }}'
+        echo "head_ref:" '${{ github.head_ref }}'
+        echo "event:" '${{ toJSON(github.event) }}'
     # - name: Checkout code into workspace directory
     #  uses: actions/checkout@v3
     #  with:
