@@ -1,0 +1,34 @@
+name: Fast Forward to Release
+description: 'Merge Fast Forward from Main to Release after Checks Complete'
+on:
+  # if: github.ref_name == github.event.repository.default_branch
+  check_suite:
+    types: [completed]
+
+inputs:
+  GITHUB_TOKEN:
+  SSH_PRIVATE_KEY:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+    - name: Echo Event
+      run: |
+        echo base_ref: ${{ github.base_ref }}
+        echo head_ref: ${{ github.head_ref }}
+        echo event: ${{ toJSON(github.event) }}
+    # - name: Checkout code into workspace directory
+    #  uses: actions/checkout@v3
+    #  with:
+    #    fetch-depth: 0
+    #    ssh-key: ${{ inputs.SSH_PRIVATE_KEY }}
+    #    persist-credentials: true
+    - name: FF Merge
+      run: |
+        git checkout ${{ github.base_ref }}
+        git merge --ff-only ${{ github.head_ref }}
+        git push --dry-run origin ${{ github.base_ref }}
