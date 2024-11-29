@@ -24,6 +24,7 @@ import org.apache.maven.shared.model.fileset.FileSet;
 public class TouchMojo extends AbstractMojo {
 
   private static final Pattern IS_POSITIVE_INTEGER = Pattern.compile("\\d+");
+
   /** Skip touching */
   @Parameter(property = "touch.skip", defaultValue = "false")
   private boolean skipTouch;
