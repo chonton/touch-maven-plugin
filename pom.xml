@@ -10,7 +10,7 @@
   <name>Touch Maven Plugin</name>
   <description>Touch files</description>
 
-  <url>https://github.com/chonton/${project.artifactId}</url>
+  <url>https://github.com/${owner}/${project.artifactId}</url>
   <inceptionYear>2021</inceptionYear>
 
   <licenses>
@@ -34,26 +34,22 @@
   </prerequisites>
 
   <scm>
-    <connection>scm:git:git://github.com/chonton/${project.artifactId}</connection>
-    <developerConnection>scm:git:git@github.com:chonton/${project.artifactId}</developerConnection>
-    <url>https://github.com/chonton/${project.artifactId}</url>
+    <connection>scm:git:git://github.com/${owner}/${project.artifactId}</connection>
+    <developerConnection>scm:git:git@github.com:${owner}/${project.artifactId}</developerConnection>
+    <url>https://github.com/${owner}/${project.artifactId}</url>
   </scm>
 
   <distributionManagement>
 
     <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>github</id>
+      <name>GitHub ${owner} Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/${owner}/${project.artifactId}</url>
     </repository>
-
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
 
     <site>
       <id>github</id>
-      <url>scm:git:ssh://git@github.com/chonton/${project.artifactId}.git</url>
+      <url>scm:git:ssh://git@github.com/${owner}/${project.artifactId}.git</url>
     </site>
 
   </distributionManagement>
@@ -73,6 +69,7 @@
     <maven.site.deploy.skip>true</maven.site.deploy.skip>
     <maven.version>3.6.3</maven.version>
 
+    <owner>chonton</owner>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -448,6 +445,21 @@
     -->
     <profile>
       <id>release</id>
+
+      <distributionManagement>
+
+        <repository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+
+      </distributionManagement>
+
       <build>
         <plugins>
 
