@@ -5,10 +5,6 @@ on:
   check_suite:
     types: [completed]
 
-inputs:
-  GITHUB_TOKEN:
-  SSH_PRIVATE_KEY:
-
 jobs:
   merge:
     runs-on: ubuntu-latest
