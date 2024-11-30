@@ -28,4 +28,4 @@ jobs:
       run: |
         git checkout "${BASE_REF}"
         git merge --ff-only "${HEAD_REF}"
-        git push --dry-run origin "${BASE_REF}"
+        git push origin "${BASE_REF}"
