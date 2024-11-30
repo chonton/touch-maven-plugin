@@ -14,11 +14,10 @@ jobs:
     steps:
     - name: Echo Event
       run: |
-        jq -r '.check_suite.pull_requests[]|select("${{ github.event.check_suite.head_branch }}"==.head.ref)|"BASE_REF=\(.base.ref)\nHEAD_REF=\(.head.sha)"' <<HERE >> "${GIT_ENV}"
-        jq -rc ".check_suite.pull_requests[]|select(\"${head_branch}\"==.head.ref)|.base.ref" <<HERE
+        jq_expr='.check_suite.pull_requests[]|select("${{ github.event.check_suite.head_branch }}"==.head.ref)|"BASE_REF=\(.base.ref)\nHEAD_REF=\(.head.sha)"'
+        jq -r "${jq_expr}" <<HERE >> "${GIT_ENV}"
         ${{ toJSON(github.event) }}
         HERE
-        )
     - name: Checkout code into workspace directory
       uses: actions/checkout@v3
       with:
