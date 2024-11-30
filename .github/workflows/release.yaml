@@ -15,7 +15,7 @@ jobs:
     - name: Echo Event
       run: |
         jq_expr='.check_suite.pull_requests[]|select("${{ github.event.check_suite.head_branch }}"==.head.ref)|"BASE_REF=\(.base.ref)\nHEAD_REF=\(.head.sha)"'
-        jq -r "${jq_expr}" <<HERE >> "${GIT_ENV}"
+        jq -r "${jq_expr}" <<HERE >> "${GITHUB_ENV}"
         ${{ toJSON(github.event) }}
         HERE
     - name: Checkout code into workspace directory
