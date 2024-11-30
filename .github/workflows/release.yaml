@@ -19,8 +19,8 @@ jobs:
         ${{ toJSON(github.event) }}
         HERE
         )
-        echo head_branch: "${head_branch}"
-        echo base_branch: "${base_branch}"
+        echo "HEAD_BRANCH=${head_branch}" >> $GITHUB_ENV
+        echo "BASE_BRANCH=${base_branch}" >> $GITHUB_ENV
     - name: Checkout code into workspace directory
       uses: actions/checkout@v3
       with:
@@ -29,6 +29,6 @@ jobs:
         persist-credentials: true
     - name: FF Merge
       run: |
-        git checkout "${base_branch}"
-        git merge --ff-only "${head_branch}"
-        git push --dry-run origin "${base_branch}"
+        git checkout "${BASE_BRANCH}"
+        git merge --ff-only "${HEAD_BRANCH}"
+        git push --dry-run origin "${BASE_BRANCH}"
