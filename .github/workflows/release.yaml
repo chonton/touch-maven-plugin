@@ -14,9 +14,12 @@ jobs:
     steps:
     - name: Echo Event
       run: |
-        echo "base_ref:" '${{ github.base_ref }}'
-        echo "head_ref:" '${{ github.head_ref }}'
-        echo "event:" '${{ toJSON(github.event) }}'
+        echo head_branch: '${{ github.check_suite.head_branch }}'
+        base_branch=$(jq -c '.check_suite.pull_requests.[]|select("${{ github.check_suite.head_branch }}"==.head.ref)|.base.ref' <<HERE
+        ${{ toJSON(github.event) }}
+        HERE
+        )
+        echo base_branch: "${base_branch}"
     # - name: Checkout code into workspace directory
     #  uses: actions/checkout@v3
     #  with:
@@ -25,6 +28,6 @@ jobs:
     #    persist-credentials: true
     - name: FF Merge
       run: |
-        git checkout ${{ github.base_ref }}
-        git merge --ff-only ${{ github.head_ref }}
-        git push --dry-run origin ${{ github.base_ref }}
+        git checkout "${base_branch}"
+        git merge --ff-only '${{ github.check_suite.head_branch }}'
+        git push --dry-run origin "${base_branch}"
