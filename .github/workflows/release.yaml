@@ -15,7 +15,7 @@ jobs:
     - name: Echo Event
       run: |
         head_branch=${{ github.event.check_suite.head_branch }}
-        base_branch=$(jq -c '.check_suite.pull_requests.[]|select("${head_branch}"==.head.ref)|.base.ref' <<HERE
+        base_branch=$(jq -rc ".check_suite.pull_requests[]|select(\"${head_branch}\"==.head.ref)|.base.ref" <<HERE
         ${{ toJSON(github.event) }}
         HERE
         )
